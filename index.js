@@ -9,6 +9,8 @@ const Helpers = require('./modules/Helpers')
 const Status = require('./modules/Status')
 const bodyParser = require('body-parser')
 const { MessageType } = require('@adiwajshing/baileys')
+const QRCode = require('qrcode')
+const { PassThrough } = require('stream')
 
 app.use(bodyParser.json())
 
@@ -92,6 +94,34 @@ app.get('/qr/:number', async (req, res) => {
       attempts: conn.attempts
     })
   }
+})
+
+app.get('/qr-image/:number', async (req, res) => {
+  const { number } = req.params
+  const conn = ConnectionList.get(number)
+  if (!conn) {
+    res.json({
+      message: 'WhatsApp is not connected.'
+    })
+  } else if (conn.getStatus() == Status.CONNECTED) {
+    res.json({
+      message: 'WhatsApp is connected.'
+    })
+  } else {
+    try {
+      const qrStream = new PassThrough()
+      const result = await QRCode.toFileStream(qrStream, conn.qr, {
+        type: 'png',
+        width: 500,
+        errorCorrectionLevel: 'H'
+      })
+  
+      qrStream.pipe(res)
+    } catch (err) {
+      console.error('Failed to return content', err)
+      return res.status(404);
+    }
+  } 
 })
 
 app.post('/send/:number', async (req, res) => {
