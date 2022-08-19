@@ -16,6 +16,15 @@ app.use(bodyParser.json())
 
 Helpers.connectAllSessions()
 
+app.get('/', async (req, res) => {
+   
+  res.json({
+    message: 'Connection status retrieved.',
+    status: 'a'
+  })
+})
+
+
 app.get('/status/:number', async (req, res) => {
   const { number } = req.params
   const sessionPath = `./sessions/${number}.json`
